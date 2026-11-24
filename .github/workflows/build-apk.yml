@@ -82,27 +82,28 @@ jobs:
           path: Bugti-Editz.apk
           retention-days: 30
 
-      - name: Publish APK to permanent Latest GitHub Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update rolling latest tag
         run: |
-          RELEASE_URL="https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/Bugti-Editz.apk"
-          RELEASE_NOTES="Automated BUGTI EDITZ build from commit ${GITHUB_SHA} (Run #${GITHUB_RUN_NUMBER}). Direct Latest APK: ${RELEASE_URL}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git push -f origin "${{ github.sha }}:refs/tags/latest" || true
 
-          if gh release view latest >/dev/null 2>&1; then
-            gh api -X PATCH "repos/${GITHUB_REPOSITORY}/git/refs/tags/latest" -f sha="${GITHUB_SHA}" -F force=true || true
-            gh release upload latest Bugti-Editz.apk --clobber
-            gh release edit latest \
-              --title "BUGTI EDITZ — Latest APK" \
-              --notes "$RELEASE_NOTES" \
-              --latest
-          else
-            gh release create latest Bugti-Editz.apk \
-              --target "${GITHUB_SHA}" \
-              --title "BUGTI EDITZ — Latest APK" \
-              --notes "$RELEASE_NOTES" \
-              --latest
-          fi
+      - name: Publish APK to permanent Latest GitHub Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: latest
+          name: "BUGTI EDITZ — Latest APK"
+          body: |
+            Automated BUGTI EDITZ build from commit `${{ github.sha }}` (Run #${{ github.run_number }}).
+
+            Direct APK Download: https://github.com/${{ github.repository }}/releases/latest/download/Bugti-Editz.apk
+          files: Bugti-Editz.apk
+          overwrite_files: true
+          make_latest: true
+          draft: false
+          prerelease: false
 
       - name: Sync Download links to this repository URL
         if: github.event_name == 'push'
