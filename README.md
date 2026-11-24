@@ -4,6 +4,6 @@ Android photo and video editor with AI enhancement, FX effects picker, Curve/Reg
 
 ## Direct APK Download (Always Latest)
 
-[Download Bugti Editz APK](https://github.com/drayazbugti/Bugti-Edits-App/releases/latest/download/Bugti-Editz.apk)
+[https://github.com/drayazbugti/Bugti-Edits-App/releases/latest/download/Bugti-Editz.apk](https://github.com/drayazbugti/Bugti-Edits-App/releases/latest/download/Bugti-Editz.apk)
 
 Every push to `main` automatically builds the newest `Bugti-Editz.apk` via GitHub Actions and publishes it to the permanent `latest` GitHub Release above.

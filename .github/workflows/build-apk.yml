@@ -114,12 +114,12 @@ jobs:
           printf '%s\n' \
             '# Bugti Editz — APK Download' \
             '' \
-            "[Download Bugti Editz APK](${RELEASE_URL})" > Download/README.md
+            "[${RELEASE_URL}](${RELEASE_URL})" > Download/README.md
 
           printf '%s\n' \
             '# Bugti Editz — APK Download' \
             '' \
-            "[Download Bugti Editz APK](${RELEASE_URL})" > "Ayaz Bugti/README.md"
+            "[${RELEASE_URL}](${RELEASE_URL})" > "Ayaz Bugti/README.md"
 
           printf '%s\n' \
             '# BUGTI EDITZ' \
@@ -128,7 +128,7 @@ jobs:
             '' \
             '## Direct APK Download (Always Latest)' \
             '' \
-            "[Download Bugti Editz APK](${RELEASE_URL})" \
+            "[${RELEASE_URL}](${RELEASE_URL})" \
             '' \
             'Every push to `main` automatically builds the newest `Bugti-Editz.apk` via GitHub Actions and publishes it to the permanent `latest` GitHub Release above.' > README.md
 
