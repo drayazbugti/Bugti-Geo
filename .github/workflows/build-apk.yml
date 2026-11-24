@@ -69,11 +69,13 @@ jobs:
             -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8" \
             -Dorg.gradle.workers.max=2
 
-      - name: Verify and prepare APK asset
+      - name: Export APK to Download folder and stage release asset
         run: |
           test -s app/build/outputs/apk/debug/app-debug.apk
+          mkdir -p Download
           cp app/build/outputs/apk/debug/app-debug.apk Bugti-Editz.apk
-          ls -lh Bugti-Editz.apk
+          cp app/build/outputs/apk/debug/app-debug.apk Download/Bugti-Editz.apk
+          ls -lh Bugti-Editz.apk Download/Bugti-Editz.apk
 
       - name: Upload workflow build artifact
         uses: actions/upload-artifact@v4
@@ -105,37 +107,25 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Sync Download links to this repository URL
-        if: github.event_name == 'push'
+      - name: Commit Download/Bugti-Editz.apk and download links to branch
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
           RELEASE_URL="https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/Bugti-Editz.apk"
-          mkdir -p Download "Ayaz Bugti"
+          RAW_APK_URL="https://github.com/${GITHUB_REPOSITORY}/raw/${GITHUB_REF_NAME}/Download/Bugti-Editz.apk"
 
           printf '%s\n' \
             '# Bugti Editz — APK Download' \
             '' \
-            "[${RELEASE_URL}](${RELEASE_URL})" > Download/README.md
+            "- **Latest Release Direct APK:** [${RELEASE_URL}](${RELEASE_URL})" \
+            "- **Download Folder APK File:** [${RAW_APK_URL}](${RAW_APK_URL})" \
+            "- **HTML Download Page:** [Download/index.html](./index.html)" > Download/README.md
 
-          printf '%s\n' \
-            '# Bugti Editz — APK Download' \
-            '' \
-            "[${RELEASE_URL}](${RELEASE_URL})" > "Ayaz Bugti/README.md"
-
-          printf '%s\n' \
-            '# BUGTI EDITZ' \
-            '' \
-            'Android photo and video editor with AI enhancement, FX effects picker, Curve/Regular speed editor, 18 filter categories, clip transitions, transform/crop/rotate/fit tools, 300% audio boost, 100 offline stickers, 100 fonts, and cloud project sync.' \
-            '' \
-            '## Direct APK Download (Always Latest)' \
-            '' \
-            "[${RELEASE_URL}](${RELEASE_URL})" \
-            '' \
-            'Every push to `main` automatically builds the newest `Bugti-Editz.apk` via GitHub Actions and publishes it to the permanent `latest` GitHub Release above.' > README.md
-
-          if ! git diff --quiet Download/README.md "Ayaz Bugti/README.md" README.md; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add Download/README.md "Ayaz Bugti/README.md" README.md
-            git commit -m "chore: sync permanent APK download link [skip ci]"
-            git push origin "HEAD:refs/heads/${GITHUB_REF_NAME}" || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f Download/Bugti-Editz.apk Download/README.md
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: publish Download/Bugti-Editz.apk [skip ci]"
+            git fetch origin "${GITHUB_REF_NAME}" --depth=1 || true
+            git rebase "origin/${GITHUB_REF_NAME}" || true
+            git push origin "HEAD:refs/heads/${GITHUB_REF_NAME}"
           fi
