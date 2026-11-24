@@ -47,8 +47,11 @@ jobs:
         with:
           gradle-version: '9.3.1'
 
-      - name: Ensure debug keystore exists
+      - name: Prepare environment and signing keystore
         run: |
+          if [ ! -f .env ] && [ -f .env.example ]; then
+            cp .env.example .env
+          fi
           if [ ! -s debug.keystore ]; then
             if [ -s debug.keystore.base64 ]; then
               base64 -di debug.keystore.base64 > debug.keystore || rm -f debug.keystore
@@ -61,20 +64,15 @@ jobs:
             fi
           fi
 
-      - name: Build BUGTI EDITZ APK
+      - name: Build and export APK to Download folder
         run: |
-          gradle :app:assembleDebug \
+          gradle :app:exportApkToDownload \
             --no-daemon \
             --no-configuration-cache \
             -Dorg.gradle.jvmargs="-Xmx3g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8" \
             -Dorg.gradle.workers.max=2
-
-      - name: Export APK to Download folder and stage release asset
-        run: |
-          test -s app/build/outputs/apk/debug/app-debug.apk
-          mkdir -p Download
-          cp app/build/outputs/apk/debug/app-debug.apk Bugti-Editz.apk
-          cp app/build/outputs/apk/debug/app-debug.apk Download/Bugti-Editz.apk
+          test -s Download/Bugti-Editz.apk
+          cp Download/Bugti-Editz.apk Bugti-Editz.apk
           ls -lh Bugti-Editz.apk Download/Bugti-Editz.apk
 
       - name: Upload workflow build artifact
@@ -107,24 +105,14 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Commit Download/Bugti-Editz.apk and download links to branch
+      - name: Commit Download/Bugti-Editz.apk to branch
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         run: |
-          RELEASE_URL="https://github.com/${GITHUB_REPOSITORY}/releases/latest/download/Bugti-Editz.apk"
-          RAW_APK_URL="https://github.com/${GITHUB_REPOSITORY}/raw/${GITHUB_REF_NAME}/Download/Bugti-Editz.apk"
-
-          printf '%s\n' \
-            '# Bugti Editz — APK Download' \
-            '' \
-            "- **Latest Release Direct APK:** [${RELEASE_URL}](${RELEASE_URL})" \
-            "- **Download Folder APK File:** [${RAW_APK_URL}](${RAW_APK_URL})" \
-            "- **HTML Download Page:** [Download/index.html](./index.html)" > Download/README.md
-
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -f Download/Bugti-Editz.apk Download/README.md
+          git add -f Download/Bugti-Editz.apk
           if ! git diff --cached --quiet; then
-            git commit -m "chore: publish Download/Bugti-Editz.apk [skip ci]"
+            git commit -m "chore: update Download/Bugti-Editz.apk [skip ci]"
             git fetch origin "${GITHUB_REF_NAME}" --depth=1 || true
             git rebase "origin/${GITHUB_REF_NAME}" || true
             git push origin "HEAD:refs/heads/${GITHUB_REF_NAME}"
